@@ -19,8 +19,9 @@ import org.springframework.stereotype.Controller;
 //        @ComponentScan.Filter(type = FilterType.ANNOTATION,classes = {Controller.class})
 //})//排除
 @ComponentScan(value = "com.cdw",includeFilters = {
-        @ComponentScan.Filter(type = FilterType.ANNOTATION,classes = {Controller.class})}
-        ,useDefaultFilters = false)//只包含
+        /*@ComponentScan.Filter(type = FilterType.ANNOTATION,classes = {Controller.class}),*/
+        @ComponentScan.Filter(type = FilterType.CUSTOM,classes = {MyTypeFilter.class})
+        },useDefaultFilters = false)//只包含
 public class MainConfig {
 
 
