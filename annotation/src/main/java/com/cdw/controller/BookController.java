@@ -1,6 +1,10 @@
 package com.cdw.controller;
 
+import com.cdw.service.BookService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+
+import java.security.PrivateKey;
 
 /**
  * @author: cdw
@@ -9,4 +13,6 @@ import org.springframework.stereotype.Controller;
  */
 @Controller
 public class BookController {
+    @Autowired
+    private BookService bookService;
 }
