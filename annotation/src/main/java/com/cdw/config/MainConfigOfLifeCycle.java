@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Scope;
  *      单实例：容器启动时创建
  *      多实例：每次获取时创建
  *
- *  BeanPostProcessor.postProcessBeforeInitialization
+ * BeanPostProcessor.postProcessBeforeInitialization
  * 初始化：
  *      对象创建完成，并赋值好，带调用初始化方法
  * BeanPostProcessor.postProcessAfterInitialization
@@ -32,6 +32,11 @@ import org.springframework.context.annotation.Scope;
  *      在bean初始化前后进行处理：
  *      postProcessBeforeInitialization：初始化之前
  *      postProcessAfterInitialization：初始化之后
+ *
+ *
+ *
+ * Spring底层对BeanPostProcessor的使用：
+ *      bean赋值，注入其他组件，@Autowired，生命周期的注解功能：@Async，XXX BeanPostProcessor
  */
 @ComponentScan("com.cdw.beans")
 @Configuration
