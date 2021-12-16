@@ -1,5 +1,7 @@
 package com.cdw.config;
 
+import com.cdw.beans.Car;
+import com.cdw.beans.Color;
 import com.cdw.dao.BookDao;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -21,9 +23,19 @@ import org.springframework.context.annotation.Primary;
  *
  *      @Inject(JSR330): 自动装配，支持@Primary
  *
+ *  3.@Autowired 属性、方法、构造器的装配：从容器中获取参数组件的值进行装配
+ *      可标注在方法：@Bean+方法参数
+ *      构造器：若组件只有一个有参构造器 @Autowired可以省略
+ *      参数位置：
+ *
+ *  4.自定义组件想要使用Spring容器底层的一些组件（ApplicationContext，BeanFactory ...）
+ *      自定义组件实现 xxxAware：创建对象时，会实现接口规定的方法注入相关的组件：Aware
+ *      把Spring底层组件注入Bean中
+ *      xxxAware：功能使用xxxProcessor处理
+ *
  */
 @Configuration
-@ComponentScan({"com.cdw.dao", "com.cdw.service", "com.cdw.controller"})
+@ComponentScan({"com.cdw.dao", "com.cdw.service", "com.cdw.controller","com.cdw.beans"})
 public class MainConfigOfAutowired {
 
 
@@ -34,5 +46,20 @@ public class MainConfigOfAutowired {
         bookDao2.setLabel("2");
         return bookDao2;
     }
+
+
+    /**
+     * @Bean标注的方法创建对象时，方法参数的值从容器中获取
+     * @param car
+     * @return
+     */
+    @Bean
+    public Color color(Car car){
+        Color color1 = new Color();
+        color1.setCar(car);
+        return color1;
+    }
+
+
 
 }
