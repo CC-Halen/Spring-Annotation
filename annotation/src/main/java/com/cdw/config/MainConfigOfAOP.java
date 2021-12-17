@@ -21,7 +21,8 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
  * 2.给切面类的目标反法标注运行时间
  * 3.将切面类与目标逻辑的方法类加入到容器中
  * 4.注解添加
- *    @Aspect: 告诉Spring切面类的存在
+ * 🔺 @Aspect: 告诉Spring切面类的存在
+ *
  * 🔺 @EnableAspectJAutoProxy: 启用基于注解的aop模式
  *
  *
@@ -93,7 +94,85 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
  *                          if (bean != null) {
  * 						        bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
  *                          }
- *                  2）doCreateBean(beanName, mbdToUse, args); 真正地创建一个bean实例；和上述 3）-> 6）一致
+ *                  2）doCreateBean(beanName, mbdToUse, args); 真正地创建一个bean实例；和上述 3）. 6）一致
+ *
+ *
+ *
+ * AnnotationAwareAspectJAutoProxyCreator[InstantiationAwareBeanPostProcessor]的作用：
+ * 1）在每一个bean创建之前，调用postProcessBeforeInstantiation()：
+ *      关心MathCalculator和LogAspects的创建
+ *      1）判断当前bean是否在advisedBeans中（保存了所有需要增强的bean）
+ *      2）判断当前bean是否是基础类型的Advice、Pointcut、Advisor、AopInfrastructureBean
+ *          或者是否是切面（@Aspect）
+ *      3）判断是否需要跳过
+ *          1）获取候选的增强器（切面里的通知方法） [List<Advisor> candidateAdvisors = findCandidateAdvisors()]
+ *              每一个封装的通知方法的增强器是InstantiationModelAwarePointcutAdvisor：
+ *              判断每一个增强器是否是AspectJPointcutAdvisor：是就返回true
+ *          2）返回false
+ *
+ * 2）创建对象
+ *  postProcessAfterInitialization：
+ *      return wrapIfNecessary(bean, beanName, cacheKey);//如果需要就包装
+ *      1）获取当前bean的所有增强器（通知方法）  Object[] specificInterceptors
+ *          1）找到当前候选的所有增强器（找到哪些方法是需要切入到当前bean方法的）
+ *          2）获取到能在当前bean使用的增强器
+ *          3）给增强器排序
+ *      2）保存当前bean到advisedBeans中
+ *      3）如果当前bean需要增强，创建当前bean的代理对象
+ *          1）获取所有增强器（通知方法）
+ *          2）保存到proxyFactory中
+ *          3）创建代理对象：Spring自动决定
+ *              JdkDynamicAopProxy(config); jdk动态代理
+ *              ObjenesisCglibAopProxy(config); cglib的动态代理
+ *      4）给容器中返回当前cglib增强了的代理对象
+ *      5）容器中获取到的就是这个组件的代理对象，执行目标方法的时候，代理对象就会执行通知方法的流程
+ *
+ * 3）目标方法的执行
+ *      容器中保存了组件的代理对象（cglib增强后的对象），这个对象里面保存了详细信息（比如增强器、目标对象、xxx）
+ *      1）CglibAopProxy.intercept(); 拦截目标方法的执行
+ *      2）根据ProxyFactory获取将要执行的目标方法的拦截器链（拦截器链：每一个通知方法又被称为方法拦截器，利用MethodInterceptor机制）
+ *          List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
+ *          1）List<Object> interceptorList= new ArrayList<>(advisors.length);被创建，用以保存所有拦截器
+ *              一个默认的ExposeInvocationInterceptor 和 4个增强器
+ *          2）遍历所有的增强器，将其转为interceptor：
+ *              registry.getInterceptors(advisor);
+ *          3）将增强器转为需要使用的List<MethodInterceptor> interceptors = new ArrayList<>(3);:
+ *              如果是MethodInterceptor，直接加入到集合中；
+ *              如果不是，使用适配器AdvisorAdapter将增强器转为MethodInterceptor；
+ *              转换完成，返回数组interceptors
+ *
+ *      3）如果没有拦截器链，直接执行目标方法
+ *      4）如果有拦截器链，把需要执行的目标对象、目标方法、拦截器链等信息传入创建一个CglibMethodInvocation对象，
+ *          并调用 proceed()方法得到返回值 Object retVal
+ *      5）拦截器链的触发过程：
+ *          已有的拦截器链（除了默认的）：LogException、LogReturn、LogEnd、LogStart
+ *          1）如果没有拦截器，直接执行目标方法，或者拦截器的索引和拦截器数组大小-1一样（也就是执行到了最后一个拦截器）
+ *          2）链式获取每一个拦截器，拦截器执行invoke方法，每一个拦截器等待下一个拦截器执行完成返回之后再执行
+ *              拦截器链的机制保证通知方法与目标方法的执行顺序
+ *
+ *
+ * 总结：
+ *      1）@EnableAspectJAutoProxy 开启AOP功能
+ *      2）@EnableAspectJAutoProxy 会给容器注册一个组件AnnotationAwareAspectJAutoProxyCreator
+ *      3）AnnotationAwareAspectJAutoProxyCreator是一个后置处理器
+ *      4）容器的创建流程：
+ *          1）registerBeanPostProcessors()，注册后置处理器，创建 AnnotationAwareAspectJAutoProxyCreator
+ *          2）finishBeanFactoryInitialization()，初始化剩下的单实例bean
+ *              1）创建业务逻辑组件和切面组件
+ *              2）AnnotationAwareAspectJAutoProxyCreator会拦截组件的创建过程
+ *              3）组件创建完成之后，判断组件是否需要增强
+ *                  是：切面的通知方法包装成增强器（Advisor）；给业务逻辑组件创建一个代理对象（cglib动态代理）
+ *       5）执行目标方法：
+ *          1）代理对象执行目标方法
+ *          2）CglibAopProxy.intercept();
+ *              1）得到目标方法的拦截器链（增强器包装成拦截器MethodInterceptor）
+ *              2）利用拦截器的链式机制，依次进入每一个拦截器中执行
+ *              3）效果：
+ *                  正常执行：前置通知 ->目标方法 ->后置通知 ->返回通知
+ *                  出现异常：前置通知 ->目标方法 ->后置通知 ->异常通知
+ *
+ *
+ *
  *
  *
  */
