@@ -86,7 +86,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
  *              2）createBean()；创建bean：  AnnotationAwareAspectJAutoProxyCreator会在任何bean创建之前先尝试返回bean的实例
  *                  【BeanPostProcessor是在Bean对象创建完成初始化前后调用的】
  *                  【InstantiationAwareBeanPostProcessor是在创建Bean实例之前先尝试用后置处理器返回对象的】
- *                  1）resolveBeforeInstantiation(beanName, mbdToUse);解析BeforeInstantiation
+ *                  1）resolveBeforeInstantiation(beanName, mbdToUse);解析 BeforeInstantiation
  *                      希望后置处理器能返回一个代理对象，如果能返回就使用，如果不能就继续第二步
  *                      1）后置处理器尝试先返回对象：
  *                          bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
