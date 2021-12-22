@@ -97,7 +97,7 @@ Spring容器的refresh()[创建以及刷新]：
     1）beanFactory.preInstantiateSingletons(); 初始化剩下的单实例bean
         1）获取容器中的所有bean，依次进行初始化和创建对象
         2）获取bean的定义信息 RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
-        3）bean不是抽象的、是单实例的、是懒加载的
+        3）bean不是抽象的、是单实例的、不是懒加载的
             1）判断是否是FactoryBean，是否实现了FactoryBean接口
             2）若不是FactoryBean，则使用getBean()方法
                 1）getBean(beanName) ->
